@@ -1,0 +1,5 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>XinT-LanPulse</title>
+<style>body{font:16px system-ui,sans-serif;max-width:520px;margin:4rem auto;padding:0 1rem;color:#233}input,button{font:inherit;padding:.6rem}input{width:15rem}#result{margin-top:1.5rem}</style></head>
+<body><h1>XinT-LanPulse</h1><p>输入设备 IPv4 地址，检测是否可达。</p><form id="form"><input id="address" aria-label="IPv4 地址" placeholder="192.168.20.1" required><button id="check">检测</button></form><p id="result" role="status"></p>
+<script>document.querySelector('#form').addEventListener('submit',async e=>{e.preventDefault();let b=document.querySelector('#check'),r=document.querySelector('#result');b.disabled=true;r.textContent='正在检测…';try{r.textContent=await window.go.main.App.Ping(document.querySelector('#address').value)}catch(e){r.textContent='检测失败：'+e}finally{b.disabled=false}})</script></body></html>
