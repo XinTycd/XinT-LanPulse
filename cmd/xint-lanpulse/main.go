@@ -18,13 +18,16 @@ var assets embed.FS
 
 type App struct{}
 
-func (a *App) Ping(address string) string {
+func (a *App) Ping(address string, timeoutMS, attempts int) string {
 	address = strings.TrimSpace(address)
 	ip, err := netip.ParseAddr(address)
 	if err != nil || !ip.Is4() {
 		return "请输入有效的 IPv4 地址"
 	}
-	result := checker.New().Ping(context.Background(), ip.String(), 1000, 1)
+	if timeoutMS < 100 || timeoutMS > 60000 || attempts < 1 || attempts > 10 {
+		return "超时须为 100～60000 毫秒，次数须为 1～10"
+	}
+	result := checker.New().Ping(context.Background(), ip.String(), timeoutMS, attempts)
 	if result.Online {
 		return fmt.Sprintf("%s 在线（%d ms）", ip, result.LatencyMS)
 	}
@@ -32,7 +35,7 @@ func (a *App) Ping(address string) string {
 }
 
 func main() {
-	if err := wails.Run(&options.App{Title: "XinT-LanPulse v0.1.0", Width: 640, Height: 400,
+	if err := wails.Run(&options.App{Title: "XinT-LanPulse v0.1.1", Width: 640, Height: 400,
 		AssetServer: &assetserver.Options{Assets: assets}, Bind: []interface{}{&App{}}}); err != nil {
 		panic(err)
 	}
