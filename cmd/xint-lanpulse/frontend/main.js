@@ -1,0 +1,50 @@
+"use strict";
+const $ = id => document.getElementById(id);
+const key = "lanpulse.devices";
+let devices = [];
+function saveDevices(next) {
+  try { localStorage.setItem(key, JSON.stringify(next)); devices = next; renderDevices(); return true; }
+  catch (_) { $("notice").textContent = "无法保存设备清单，请检查本地存储是否可用。"; return false; }
+}
+function validAddress(s) {
+  const parts = s.split(".");
+  return parts.length === 4 && parts.every(p => /^(0|[1-9][0-9]{0,2})$/.test(p) && Number(p) <= 255);
+}
+function renderDevices() {
+  const list = $("devices"); list.replaceChildren();
+  devices.forEach(address => {
+    const li = document.createElement("li");
+    const select = document.createElement("button"); select.type = "button"; select.textContent = address;
+    select.addEventListener("click", () => { $("address").value = address; });
+    const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "删除";
+    remove.setAttribute("aria-label", "删除 " + address);
+    remove.addEventListener("click", () => { $("notice").textContent = ""; saveDevices(devices.filter(v => v !== address)); });
+    li.append(select, " ", remove); list.append(li);
+  });
+}
+try {
+  const stored = JSON.parse(localStorage.getItem(key) || "[]");
+  if (Array.isArray(stored)) devices = [...new Set(stored.filter(v => typeof v === "string" && validAddress(v)))];
+} catch (_) { $("notice").textContent = "无法读取设备清单。"; }
+renderDevices();
+$("add").addEventListener("click", () => {
+  const address = $("address").value.trim(); $("notice").textContent = "";
+  if (!validAddress(address)) { $("notice").textContent = "请输入有效的 IPv4 地址。"; return; }
+  if (devices.includes(address)) { $("notice").textContent = "该地址已存在。"; return; }
+  if (saveDevices([...devices, address])) $("notice").textContent = "设备已添加。";
+});
+for (const id of ["address", "timeout", "attempts"]) {
+  const el = $(id);
+  try { const value = localStorage.getItem("lanpulse." + id); if (value !== null) el.value = value;
+    el.addEventListener("change", () => { try { localStorage.setItem("lanpulse." + id, el.value); } catch (_) {} });
+  } catch (_) {}
+}
+$("clear").addEventListener("click", () => $("history").replaceChildren());
+$("form").addEventListener("submit", async event => {
+  event.preventDefault(); const button = $("check"), result = $("result"); button.disabled = true; result.textContent = "正在检测…";
+  try {
+    result.textContent = await window.go.main.App.Ping($("address").value, Number($("timeout").value), Number($("attempts").value));
+    const item = document.createElement("li"); item.textContent = new Date().toLocaleTimeString() + "　" + result.textContent;
+    const history = $("history"); history.prepend(item); while (history.children.length > 20) history.lastElementChild.remove();
+  } catch (err) { result.textContent = "检测失败：" + err; } finally { button.disabled = false; }
+});
