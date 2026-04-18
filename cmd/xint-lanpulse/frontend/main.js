@@ -39,12 +39,29 @@ for (const id of ["address", "timeout", "attempts"]) {
     el.addEventListener("change", () => { try { localStorage.setItem("lanpulse." + id, el.value); } catch (_) {} });
   } catch (_) {}
 }
+function record(text) {
+  const item = document.createElement("li"); item.textContent = new Date().toLocaleTimeString() + "　" + text;
+  const history = $("history"); history.prepend(item); while (history.children.length > 20) history.lastElementChild.remove();
+}
+$("batch").addEventListener("click", async () => {
+  if (!devices.length) { $("batch-status").textContent = "设备清单为空。"; return; }
+  if (!$("timeout").reportValidity() || !$("attempts").reportValidity()) return;
+  const queue = [...devices], timeout = Number($("timeout").value), attempts = Number($("attempts").value);
+  $("batch").disabled = true; $("check").disabled = true;
+  try {
+    for (let i = 0; i < queue.length; i++) {
+      $("batch-status").textContent = `正在检测 ${i + 1}/${queue.length}：${queue[i]}`;
+      try { record(await window.go.main.App.Ping(queue[i], timeout, attempts)); }
+      catch (err) { record(queue[i] + " 检测失败：" + err); }
+    }
+    $("batch-status").textContent = `已完成 ${queue.length} 台设备的检测。`;
+  } finally { $("batch").disabled = false; $("check").disabled = false; }
+});
 $("clear").addEventListener("click", () => $("history").replaceChildren());
 $("form").addEventListener("submit", async event => {
-  event.preventDefault(); const button = $("check"), result = $("result"); button.disabled = true; result.textContent = "正在检测…";
+  event.preventDefault(); const button = $("check"), result = $("result"); button.disabled = true; $("batch").disabled = true; result.textContent = "正在检测…";
   try {
     result.textContent = await window.go.main.App.Ping($("address").value, Number($("timeout").value), Number($("attempts").value));
-    const item = document.createElement("li"); item.textContent = new Date().toLocaleTimeString() + "　" + result.textContent;
-    const history = $("history"); history.prepend(item); while (history.children.length > 20) history.lastElementChild.remove();
-  } catch (err) { result.textContent = "检测失败：" + err; } finally { button.disabled = false; }
+    record(result.textContent);
+  } catch (err) { result.textContent = "检测失败：" + err; } finally { button.disabled = false; $("batch").disabled = false; }
 });
