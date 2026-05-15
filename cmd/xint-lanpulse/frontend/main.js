@@ -49,11 +49,16 @@ $("batch").addEventListener("click", async () => {
   const queue = [...devices], timeout = Number($("timeout").value), attempts = Number($("attempts").value);
   $("batch").disabled = true; $("check").disabled = true;
   try {
-    for (let i = 0; i < queue.length; i++) {
-      $("batch-status").textContent = `正在检测 ${i + 1}/${queue.length}：${queue[i]}`;
-      try { record(await window.go.main.App.Ping(queue[i], timeout, attempts)); }
-      catch (err) { record(queue[i] + " 检测失败：" + err); }
-    }
+    let next = 0, completed = 0;
+    const runWorker = async () => {
+      while (next < queue.length) {
+        const address = queue[next++];
+        try { record(await window.go.main.App.Ping(address, timeout, attempts)); }
+        catch (err) { record(address + " 检测失败：" + err); }
+        $("batch-status").textContent = `已检测 ${++completed}/${queue.length}`;
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, queue.length) }, runWorker));
     $("batch-status").textContent = `已完成 ${queue.length} 台设备的检测。`;
   } finally { $("batch").disabled = false; $("check").disabled = false; }
 });

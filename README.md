@@ -1,6 +1,6 @@
-# XinT-LanPulse v0.1.5（重建版）
+# XinT-LanPulse v0.2.0（重建版）
 
-Windows 内网连通性检测雏形，支持 IPv4 地址检测、自定义超时和尝试次数，显示最近 20 条本次检测记录，并支持维护本地设备地址清单和逐个批量检测。
+Windows 内网连通性检测雏形，支持 IPv4 地址检测、自定义超时和尝试次数，显示最近 20 条本次检测记录，并支持维护本地设备地址清单和最多四路并发批量检测。
 
 需要 Go 1.26 与 Windows WebView2。运行 `go test ./...` 验证，运行 `go run ./cmd/xint-lanpulse` 启动。
 
