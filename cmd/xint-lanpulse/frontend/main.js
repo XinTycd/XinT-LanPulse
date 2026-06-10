@@ -33,6 +33,23 @@ $("add").addEventListener("click", () => {
   if (devices.includes(address)) { $("notice").textContent = "该地址已存在。"; return; }
   if (saveDevices([...devices, address])) $("notice").textContent = "设备已添加。";
 });
+$("export").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify({version: 1, devices}, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob), link = document.createElement("a");
+  link.href = url; link.download = "lanpulse-devices.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+$("import").addEventListener("change", async event => {
+  const file = event.target.files[0]; if (!file) return;
+  try {
+    if (file.size > 256 * 1024) throw new Error("文件不能超过 256 KB");
+    const data = JSON.parse(await file.text());
+    if (!data || data.version !== 1 || !Array.isArray(data.devices) || data.devices.length > 4096 ||
+        !data.devices.every(v => typeof v === "string" && validAddress(v))) throw new Error("文件格式或地址无效");
+    const merged = [...new Set([...devices, ...data.devices])];
+    if (saveDevices(merged)) $("notice").textContent = `导入完成，共 ${merged.length} 个地址。`;
+  } catch (err) { $("notice").textContent = "导入失败：" + err.message; }
+  finally { event.target.value = ""; }
+});
 for (const id of ["address", "timeout", "attempts"]) {
   const el = $(id);
   try { const value = localStorage.getItem("lanpulse." + id); if (value !== null) el.value = value;

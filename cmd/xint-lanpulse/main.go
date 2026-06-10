@@ -35,7 +35,7 @@ func (a *App) Ping(address string, timeoutMS, attempts int) string {
 }
 
 func main() {
-	if err := wails.Run(&options.App{Title: "XinT-LanPulse v0.2.0", Width: 640, Height: 720,
+	if err := wails.Run(&options.App{Title: "XinT-LanPulse v0.2.1", Width: 640, Height: 720,
 		AssetServer: &assetserver.Options{Assets: assets}, Bind: []interface{}{&App{}}}); err != nil {
 		panic(err)
 	}
