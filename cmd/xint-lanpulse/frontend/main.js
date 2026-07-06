@@ -60,7 +60,7 @@ function record(text) {
   const item = document.createElement("li"); item.textContent = new Date().toLocaleTimeString() + "　" + text;
   const history = $("history"); history.prepend(item); while (history.children.length > 20) history.lastElementChild.remove();
 }
-$("batch").addEventListener("click", async () => {
+async function runBatch() {
   if (!devices.length) { $("batch-status").textContent = "设备清单为空。"; return; }
   if (!$("timeout").reportValidity() || !$("attempts").reportValidity()) return;
   const queue = [...devices], timeout = Number($("timeout").value), attempts = Number($("attempts").value);
@@ -78,6 +78,24 @@ $("batch").addEventListener("click", async () => {
     await Promise.all(Array.from({ length: Math.min(4, queue.length) }, runWorker));
     $("batch-status").textContent = `已完成 ${queue.length} 台设备的检测。`;
   } finally { $("batch").disabled = false; $("check").disabled = false; }
+}
+$("batch").addEventListener("click", runBatch);
+let scheduleTimer = null, scheduleEnabled = false, scheduleGeneration = 0;
+$("schedule").addEventListener("click", () => {
+  if (scheduleEnabled) {
+    scheduleEnabled = false; scheduleGeneration++; clearTimeout(scheduleTimer);
+    $("schedule").textContent = "开启定时检测"; $("schedule-status").textContent = "定时检测已停止。"; return;
+  }
+  if (!$("interval").reportValidity()) return;
+  const delay = Number($("interval").value) * 60000, generation = ++scheduleGeneration;
+  scheduleEnabled = true; $("schedule").textContent = "停止定时检测";
+  $("schedule-status").textContent = "定时检测已开启，程序关闭后停止。";
+  const tick = async () => {
+    if (!scheduleEnabled || generation !== scheduleGeneration) return;
+    if (!$("batch").disabled) await runBatch();
+    if (scheduleEnabled && generation === scheduleGeneration) scheduleTimer = setTimeout(tick, delay);
+  };
+  scheduleTimer = setTimeout(tick, delay);
 });
 $("clear").addEventListener("click", () => $("history").replaceChildren());
 $("form").addEventListener("submit", async event => {

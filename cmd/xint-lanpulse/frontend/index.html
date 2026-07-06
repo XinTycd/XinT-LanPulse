@@ -6,5 +6,5 @@
 <p><label>超时（毫秒） <input id="timeout" type="number" min="100" max="60000" value="1000" required></label></p>
 <p><label>尝试次数 <input id="attempts" type="number" min="1" max="10" value="1" required></label></p></form>
 <p id="result" role="status"></p><h2>设备清单</h2><p>将当前地址添加到本机清单，可选择或删除。</p>
-<button id="add" type="button">添加当前地址</button> <button id="batch" type="button">并发检测设备</button><button id="export" type="button">导出清单</button> <label>导入清单 <input id="import" type="file" accept="application/json,.json"></label><p id="batch-status" role="status"></p><p id="notice" role="status"></p><ul id="devices"></ul>
+<button id="add" type="button">添加当前地址</button> <button id="batch" type="button">并发检测设备</button><button id="export" type="button">导出清单</button> <label>导入清单 <input id="import" type="file" accept="application/json,.json"></label><p><label>定时间隔（分钟） <input id="interval" type="number" min="1" max="1440" value="15"></label> <button id="schedule" type="button">开启定时检测</button></p><p id="schedule-status" role="status">定时检测未开启。</p><p id="batch-status" role="status"></p><p id="notice" role="status"></p><ul id="devices"></ul>
 <h2>本次检测记录</h2><button id="clear" type="button">清空记录</button><ul id="history"></ul><script src="/main.js"></script></body></html>
