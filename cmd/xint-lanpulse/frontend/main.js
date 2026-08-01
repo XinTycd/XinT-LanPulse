@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const key = "lanpulse.devices";
 let devices = [];
+const latest = new Map();
 function saveDevices(next) {
   try { localStorage.setItem(key, JSON.stringify(next)); devices = next; renderDevices(); return true; }
   catch (_) { $("notice").textContent = "无法保存设备清单，请检查本地存储是否可用。"; return false; }
@@ -19,7 +20,8 @@ function renderDevices() {
     const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "删除";
     remove.setAttribute("aria-label", "删除 " + address);
     remove.addEventListener("click", () => { $("notice").textContent = ""; saveDevices(devices.filter(v => v !== address)); });
-    li.append(select, " ", remove); list.append(li);
+    const state = document.createElement("span"); state.textContent = latest.has(address) ? "　" + latest.get(address) : "　未检测";
+    li.append(select, " ", remove, state); list.append(li);
   });
 }
 try {
@@ -70,8 +72,9 @@ async function runBatch() {
     const runWorker = async () => {
       while (next < queue.length) {
         const address = queue[next++];
-        try { record(await window.go.main.App.Ping(address, timeout, attempts)); }
-        catch (err) { record(address + " 检测失败：" + err); }
+        try { const text = await window.go.main.App.Ping(address, timeout, attempts); latest.set(address, text); record(text); }
+        catch (err) { const text = address + " 检测失败：" + err; latest.set(address, text); record(text); }
+        renderDevices();
         $("batch-status").textContent = `已检测 ${++completed}/${queue.length}`;
       }
     };
@@ -102,6 +105,7 @@ $("form").addEventListener("submit", async event => {
   event.preventDefault(); const button = $("check"), result = $("result"); button.disabled = true; $("batch").disabled = true; result.textContent = "正在检测…";
   try {
     result.textContent = await window.go.main.App.Ping($("address").value, Number($("timeout").value), Number($("attempts").value));
+    const address = $("address").value.trim(); if (devices.includes(address)) { latest.set(address, result.textContent); renderDevices(); }
     record(result.textContent);
   } catch (err) { result.textContent = "检测失败：" + err; } finally { button.disabled = false; $("batch").disabled = false; }
 });
