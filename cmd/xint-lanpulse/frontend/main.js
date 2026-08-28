@@ -52,7 +52,7 @@ $("import").addEventListener("change", async event => {
   } catch (err) { $("notice").textContent = "导入失败：" + err.message; }
   finally { event.target.value = ""; }
 });
-for (const id of ["address", "timeout", "attempts"]) {
+for (const id of ["address", "timeout", "attempts", "workers"]) {
   const el = $(id);
   try { const value = localStorage.getItem("lanpulse." + id); if (value !== null) el.value = value;
     el.addEventListener("change", () => { try { localStorage.setItem("lanpulse." + id, el.value); } catch (_) {} });
@@ -64,7 +64,7 @@ function record(text) {
 }
 async function runBatch() {
   if (!devices.length) { $("batch-status").textContent = "设备清单为空。"; return; }
-  if (!$("timeout").reportValidity() || !$("attempts").reportValidity()) return;
+  if (!$("timeout").reportValidity() || !$("attempts").reportValidity() || !$("workers").reportValidity()) return;
   const queue = [...devices], timeout = Number($("timeout").value), attempts = Number($("attempts").value);
   $("batch").disabled = true; $("check").disabled = true;
   try {
@@ -78,7 +78,7 @@ async function runBatch() {
         $("batch-status").textContent = `已检测 ${++completed}/${queue.length}`;
       }
     };
-    await Promise.all(Array.from({ length: Math.min(4, queue.length) }, runWorker));
+    await Promise.all(Array.from({ length: Math.min(Number($("workers").value), queue.length) }, runWorker));
     $("batch-status").textContent = `已完成 ${queue.length} 台设备的检测。`;
   } finally { $("batch").disabled = false; $("check").disabled = false; }
 }
