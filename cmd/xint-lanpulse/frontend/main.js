@@ -35,6 +35,17 @@ $("add").addEventListener("click", () => {
   if (devices.includes(address)) { $("notice").textContent = "该地址已存在。"; return; }
   if (saveDevices([...devices, address])) $("notice").textContent = "设备已添加。";
 });
+$("migration").addEventListener("click", async () => {
+  $("migration").disabled = true;
+  try {
+    const encoded = await window.go.main.App.ExportMigration(devices);
+    const raw = atob(encoded), bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+    const link = document.createElement("a"); link.href = url; link.download = "lanpulse-migration.xlsx"; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000); $("notice").textContent = "迁移表已生成。";
+  } catch (err) { $("notice").textContent = "导出失败：" + err; }
+  finally { $("migration").disabled = false; }
+});
 $("export").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify({version: 1, devices}, null, 2)], {type: "application/json"});
   const url = URL.createObjectURL(blob), link = document.createElement("a");
